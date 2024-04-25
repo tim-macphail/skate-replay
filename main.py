@@ -1,6 +1,29 @@
 import cv2
 
+import pyaudio
+import numpy as np
+import time
 
+# Constants for audio settings
+FORMAT = pyaudio.paInt16
+CHANNELS = 1
+RATE = 44100
+CHUNK = 1024
+THRESHOLD = 5000  # Adjust this threshold according to your environment
+DEBOUNCE_TIME = 0.5  # Debounce time in seconds
+
+# Initialize PyAudio
+audio = pyaudio.PyAudio()
+
+# Open audio stream
+stream = audio.open(
+    format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK
+)
+
+print("Listening for claps...")
+
+# Variables for debounce
+clap_detected_time = 0
 
 
 # Initialize the webcam
@@ -22,15 +45,18 @@ while True:
 
     buffer.append(frame)
 
-    if len(buffer) > buffer_cap:
-        if show_frame:
-            cv2.imshow("Webcam", buffer.pop(0))
+    if show_frame and len(buffer) > buffer_cap:
+        cv2.imshow("Webcam", buffer.pop(0))
 
     # Exit the loop if 'q' is pressed
     if cv2.waitKey(1) & 0xFF == ord("q"):
-        print("quitting...")        
+        print("quitting...")
         cap.release()
         cv2.destroyAllWindows()
+        # Close PyAudio stream and terminate PyAudio
+        stream.stop_stream()
+        stream.close()
+        audio.terminate()
         exit(0)
 
     if cv2.waitKey(1) & 0xFF == ord("s"):
@@ -46,3 +72,17 @@ while True:
     if slow_mo:
         show_frame = not show_frame
 
+    # Read audio data from the stream
+    data = stream.read(CHUNK)
+    
+    # Convert binary data to numpy array
+    audio_data = np.frombuffer(data, dtype=np.int16)
+    
+    # Check if the amplitude exceeds the threshold
+    if np.max(np.abs(audio_data)) > THRESHOLD:
+        # If a potential clap is detected, check debounce time
+        current_time = time.time()
+        if current_time - clap_detected_time > DEBOUNCE_TIME:
+            print("Clap detected!")
+            slow_mo = True
+            clap_detected_time = current_time
