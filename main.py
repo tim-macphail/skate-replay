@@ -53,9 +53,12 @@ while True:
         data = stream.read(CHUNK)
         audio_data = np.frombuffer(data, dtype=np.int16)
         if np.max(np.abs(audio_data)) > EVENT_AMPLITUDE_THRESHOLD:
-            print("Clap detected!")
+            print("event detected!")
             slowmo_control = REPLAY_FRAME_COUNT * REPLAY_FRAME_INTERVAL
     else:
         if slowmo_control % REPLAY_FRAME_INTERVAL == 0:
             cv2.imshow("Webcam", memory.pop(0))
         slowmo_control -= 1
+
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        exit(0)
