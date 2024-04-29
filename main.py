@@ -3,13 +3,13 @@ import pyaudio
 import numpy as np
 import time
 
-# Configuration
-CLAP_THRESHOLD = 2000  # Adjust this threshold according to your environment
+# configuration
+EVENT_AMPLITUDE_THRESHOLD = 2000  # Adjust this threshold according to your environment
 EVENT_DEBOUNCE_TIME = 0.5  # Debounce time in seconds
 RECOLLECTION = 2  # seconds
 CONTINUATION = 1  # seconds
-PLAYBACK_RATE = 0.25
-FRAME_INTERVAL = int(1 / PLAYBACK_RATE)
+REPLAY_PLAYBACK_RATE = 0.25
+REPLAY_FRAME_INTERVAL = int(1 / REPLAY_PLAYBACK_RATE)
 
 # pyaudio constants
 FORMAT = pyaudio.paInt16
@@ -17,7 +17,6 @@ CHANNELS = 1
 RATE = 44100
 CHUNK = 1024
 
-clap_detected_time = 0
 
 print("initializing audio stream 👂...")
 # Initialize PyAudio
@@ -34,14 +33,16 @@ cap = cv2.VideoCapture(0)
 print("webcam initialized")
 
 FRAME_RATE = cap.get(cv2.CAP_PROP_FPS)
+MEMORY_CAP = int(FRAME_RATE * RECOLLECTION)
 
+# global control variables
 memory = []
-buffer_size_cap = int(FRAME_RATE * RECOLLECTION)
 slow_mo = False
-
+clap_detected_time = 0
 slowmo_control = 0
 
-REPLAY_FRAME_COUNT = FRAME_RATE * (RECOLLECTION + CONTINUATION) * FRAME_INTERVAL
+REPLAY_FRAME_COUNT = FRAME_RATE * (RECOLLECTION + CONTINUATION) * REPLAY_FRAME_INTERVAL
+
 # capture loop (FRAME_RATE iterations / sec)
 while True:
     # Capture and flip the frame
@@ -52,12 +53,12 @@ while True:
 
     if not slow_mo:
         cv2.imshow("Webcam", frame)  # read from the back of the queue
-        if len(memory) > buffer_size_cap:
+        if len(memory) > MEMORY_CAP:
             memory.pop(0)
     else:
         if not slowmo_control:
             slow_mo = False
-        elif slowmo_control % FRAME_INTERVAL == 0:  # show every 2nd frame
+        elif slowmo_control % REPLAY_FRAME_INTERVAL == 0:  # show every 2nd frame
             cv2.imshow("Webcam", memory.pop(0))
         slowmo_control -= 1
 
@@ -74,7 +75,7 @@ while True:
 
     if cv2.waitKey(1) & 0xFF == ord("s"):
         slow_mo = not slow_mo
-        memory = memory[:buffer_size_cap]  # truncate the buffer
+        memory = memory[:MEMORY_CAP]  # truncate the buffer
         slowmo_control = REPLAY_FRAME_COUNT
         # else:
         #     print("back to regs")
