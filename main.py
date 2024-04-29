@@ -37,11 +37,10 @@ MEMORY_CAP = int(FRAME_RATE * RECOLLECTION)
 
 # global control variables
 memory = []
-slow_mo = False
 clap_detected_time = 0
 slowmo_control = 0
 
-REPLAY_FRAME_COUNT = FRAME_RATE * (RECOLLECTION + CONTINUATION) * REPLAY_FRAME_INTERVAL
+REPLAY_FRAME_COUNT = int(FRAME_RATE * (RECOLLECTION + CONTINUATION))
 
 # capture loop (FRAME_RATE iterations / sec)
 while True:
@@ -51,36 +50,17 @@ while True:
 
     memory.append(frame)
 
-    if not slow_mo:
-        cv2.imshow("Webcam", frame)  # read from the back of the queue
-        if len(memory) > MEMORY_CAP:
+    if not slowmo_control:
+        cv2.imshow("Webcam", frame)
+        while len(memory) > MEMORY_CAP:
             memory.pop(0)
     else:
-        if not slowmo_control:
-            slow_mo = False
-        elif slowmo_control % REPLAY_FRAME_INTERVAL == 0:  # show every 2nd frame
+        if slowmo_control % REPLAY_FRAME_INTERVAL == 0:
             cv2.imshow("Webcam", memory.pop(0))
         slowmo_control -= 1
 
-    # # Exit the loop if 'q' is pressed
-    # if cv2.waitKey(1) & 0xFF == ord("q"):
-    #     print("quitting...")
-    #     cap.release()
-    #     cv2.destroyAllWindows()
-    #     # Close PyAudio stream and terminate PyAudio
-    #     stream.stop_stream()
-    #     stream.close()
-    #     audio.terminate()
-    #     exit(0)
-
     if cv2.waitKey(1) & 0xFF == ord("s"):
-        slow_mo = not slow_mo
-        memory = memory[:MEMORY_CAP]  # truncate the buffer
-        slowmo_control = REPLAY_FRAME_COUNT
-        # else:
-        #     print("back to regs")
-        #     slow_mo = False
-        #     memory = memory[:buffer_size_cap]  # truncate the buffer
+        slowmo_control = REPLAY_FRAME_COUNT * REPLAY_FRAME_INTERVAL
 
         # Read audio data from the stream
         # data = stream.read(CHUNK)
