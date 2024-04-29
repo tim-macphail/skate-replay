@@ -20,12 +20,12 @@ audio = pyaudio.PyAudio()
 stream = audio.open(
     format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK
 )
-print("audio stream initialized")
+print("audio stream initialized.")
 
 # initialize the webcam
 print("initializing webcam 📹...")
 cap = cv2.VideoCapture(0)
-print("webcam initialized")
+print("webcam initialized.")
 
 # computed constants
 FRAME_RATE = cap.get(cv2.CAP_PROP_FPS)
@@ -37,11 +37,9 @@ REPLAY_FRAME_COUNT = int(FRAME_RATE * (RECOLLECTION + CONTINUATION))
 memory = []
 slowmo_control = 0
 
-# capture loop (FRAME_RATE iterations / sec)
 while True:
-    # Capture and flip the frame
     ret, frame = cap.read()
-    # frame = cv2.flip(frame, 1)
+    frame = cv2.flip(frame, 1)
 
     memory.append(frame)
 
@@ -61,4 +59,10 @@ while True:
         slowmo_control -= 1
 
     if cv2.waitKey(1) & 0xFF == ord("q"):
+        print("quitting...")
+        cap.release()
+        cv2.destroyAllWindows()
+        stream.stop_stream()
+        stream.close()
+        audio.terminate()
         exit(0)
