@@ -1,12 +1,21 @@
 import cv2
 import pyaudio
 import numpy as np
+import argparse
 
-# configuration constants
-EVENT_AMPLITUDE_THRESHOLD = 10000  # Adjust this threshold according to your environment
-RECOLLECTION = 2  # seconds
-CONTINUATION = 1  # seconds
-REPLAY_PLAYBACK_RATE = 0.25
+from persistence import save_replay
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--sound", help="threshold for audio event detection", default=10000)
+parser.add_argument("--recollection", help="playback duration after event detection (seconds)", default=1)
+parser.add_argument("--continuation", help="playback duration after event detection (seconds)", default=1)
+parser.add_argument("--playback", help="event playback rate", default=0.3)
+args = parser.parse_args()
+
+EVENT_AMPLITUDE_THRESHOLD = int(args.sound)
+RECOLLECTION = float(args.recollection)
+CONTINUATION = float(args.continuation)
+REPLAY_PLAYBACK_RATE = float(args.playback)
 
 # pyaudio constants
 FORMAT = pyaudio.paInt16
@@ -60,10 +69,11 @@ while True:
         if playback_control == 0:
             print("resume live stream.")
 
-    if cv2.waitKey(1) & 0xFF == ord("s"):
-        playback_control = 0
+    key = chr(cv2.waitKey(1) & 0xFF)
+    if key == " ":
+        save_replay(memory)
 
-    if cv2.waitKey(1) & 0xFF == ord("q"):
+    if key == "q":
         print("quitting...")
         cap.release()
         cv2.destroyAllWindows()
