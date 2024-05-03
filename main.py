@@ -92,7 +92,7 @@ while True:
         playback_control = REPLAY_FRAME_COUNT * REPLAY_FRAME_INTERVAL
         memory = event
 
-    if key == "q":
+    if key == "q" or cv2.getWindowProperty("Webcam", cv2.WND_PROP_VISIBLE) < 1:
         log.info("quitting...")
         cap.release()
         cv2.destroyAllWindows()
