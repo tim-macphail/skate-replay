@@ -1,2 +1,4 @@
+from logger import log
+
 def save_replay(memory):
-    print('TODO: save .mp4')
+    log.info("TODO: save .mp4")
