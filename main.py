@@ -1,10 +1,13 @@
+from typing import List
 import cv2
+from cv2.typing import MatLike
 import pyaudio
 import numpy as np
 import argparse
 
-from persistence import save_replay
+from persistence import create_video
 from logger import log
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -46,6 +49,7 @@ log.info("audio stream initialized.")
 # initialize the webcam
 log.info("initializing webcam 📹...")
 cap = cv2.VideoCapture(0)
+cv2.namedWindow("Webcam", cv2.WINDOW_NORMAL)
 log.info("webcam initialized.")
 
 # computed constants
@@ -55,12 +59,13 @@ REPLAY_FRAME_INTERVAL = int(1 / REPLAY_PLAYBACK_RATE)
 REPLAY_FRAME_COUNT = int(FRAME_RATE * (RECOLLECTION + CONTINUATION))
 
 # global control variables
-memory = []
+memory: List[MatLike] = []
+event: List[MatLike] = []
 playback_control = 0
 
 while True:
     ret, frame = cap.read()
-    frame = cv2.flip(frame, 1)
+    frame: MatLike = cv2.flip(frame, 1)
     audio_data = stream.read(CHUNK)
 
     memory.append(frame)
@@ -74,6 +79,7 @@ while True:
         if np.max(np.abs(audio_data)) > EVENT_AMPLITUDE_THRESHOLD:
             log.info(f"event with amplitude {np.max(np.abs(audio_data))} detected!")
             playback_control = REPLAY_FRAME_COUNT * REPLAY_FRAME_INTERVAL
+            event = memory[:playback_control]
     else:
         if playback_control % REPLAY_FRAME_INTERVAL == 0:
             cv2.imshow("Webcam", memory.pop(0))
@@ -83,7 +89,8 @@ while True:
 
     key = chr(cv2.waitKey(1) & 0xFF)
     if key == " ":
-        save_replay(memory)
+        playback_control = REPLAY_FRAME_COUNT * REPLAY_FRAME_INTERVAL
+        memory = event
 
     if key == "q":
         log.info("quitting...")
