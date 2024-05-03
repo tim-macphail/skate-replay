@@ -62,6 +62,7 @@ REPLAY_FRAME_COUNT = int(FRAME_RATE * (RECOLLECTION + CONTINUATION))
 memory: List[MatLike] = []
 event: List[MatLike] = []
 playback_control = 0
+replay_index = 0
 
 while True:
     ret, frame = cap.read()
@@ -79,18 +80,20 @@ while True:
         if np.max(np.abs(audio_data)) > EVENT_AMPLITUDE_THRESHOLD:
             log.info(f"event with amplitude {np.max(np.abs(audio_data))} detected!")
             playback_control = REPLAY_FRAME_COUNT * REPLAY_FRAME_INTERVAL
-            event = memory[:playback_control]
     else:
         if playback_control % REPLAY_FRAME_INTERVAL == 0:
-            cv2.imshow("Webcam", memory.pop(0))
+            cv2.imshow("Webcam", memory[replay_index])
+            replay_index += 1
         playback_control -= 1
         if playback_control == 0:
+            event = memory[:REPLAY_FRAME_COUNT]
             log.info("resume live stream.")
+            replay_index = 0
 
     key = chr(cv2.waitKey(1) & 0xFF)
     if key == " ":
-        playback_control = REPLAY_FRAME_COUNT * REPLAY_FRAME_INTERVAL
         memory = event
+        playback_control = len(event) * REPLAY_FRAME_INTERVAL
 
     if key == "q" or cv2.getWindowProperty("Webcam", cv2.WND_PROP_VISIBLE) < 1:
         log.info("quitting...")
