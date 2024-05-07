@@ -5,7 +5,7 @@ import pyaudio
 import numpy as np
 import argparse
 
-from persistence import create_video
+from persistence import save_video
 from logger import log
 
 
@@ -94,9 +94,14 @@ while True:
     if key == "\r":
         playback_control = 0
         replay_index = 0
-    if key == " ":
+    elif key == " ":
         memory = event
         playback_control = len(event) * REPLAY_FRAME_INTERVAL
+    elif key == "s":
+        save_video(
+            event,
+            int(FRAME_RATE * REPLAY_PLAYBACK_RATE),
+        )
     elif key == "q" or cv2.getWindowProperty("Webcam", cv2.WND_PROP_VISIBLE) < 1:
         log.info("quitting...")
         cap.release()
