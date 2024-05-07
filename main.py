@@ -11,7 +11,7 @@ from logger import log
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "-s", "--sound", help="threshold for audio event detection", default=10000
+    "-s", "--sound", help="threshold for audio event detection", default=25000
 )
 parser.add_argument(
     "-r",
@@ -91,11 +91,13 @@ while True:
             replay_index = 0
 
     key = chr(cv2.waitKey(1) & 0xFF)
+    if key == "\r":
+        playback_control = 0
+        replay_index = 0
     if key == " ":
         memory = event
         playback_control = len(event) * REPLAY_FRAME_INTERVAL
-
-    if key == "q" or cv2.getWindowProperty("Webcam", cv2.WND_PROP_VISIBLE) < 1:
+    elif key == "q" or cv2.getWindowProperty("Webcam", cv2.WND_PROP_VISIBLE) < 1:
         log.info("quitting...")
         cap.release()
         cv2.destroyAllWindows()
